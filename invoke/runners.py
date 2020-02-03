@@ -128,7 +128,10 @@ class Runner(object):
             the ``echo`` keyword, etc). The base default values are described
             in the parameter list below.
 
-        :param str command: The shell command to execute.
+        :type command: str or tuple
+        :param command:
+            The shell command to execute as a single string or a list of
+            arguments.
 
         :param str shell:
             Which shell binary to use. Default: ``/bin/bash`` (on Unix;
@@ -385,7 +388,11 @@ class Runner(object):
         self.encoding = self.opts["encoding"] or self.default_encoding()
         # Echo running command (wants to be early to be included in dry-run)
         if self.opts["echo"]:
-            print("\033[1;37m{}\033[0m".format(command))
+            print("\033[1;37m{}\033[0m".format(
+                shlex_join(command)
+                if isinstance(command, (list, tuple))
+                else command
+            ))
         # Prepare common result args.
         # TODO: I hate this. Needs a deeper separate think about tweaking
         # Runner.generate_result in a way that isn't literally just this same
@@ -996,7 +1003,8 @@ class Runner(object):
         In most cases, this method will also set subclass-specific member
         variables used in other methods such as `wait` and/or `returncode`.
 
-        :param str command:
+        :type command: str or tuple
+        :param command:
             Command string to execute.
 
         :param str shell:
@@ -1266,7 +1274,11 @@ class Local(Runner):
                 # for now.
                 # NOTE: stdlib subprocess (actually its posix flavor, which is
                 # written in C) uses either execve or execv, depending.
-                os.execve(shell, [shell, "-c", command], env)
+                os.execve(shell, [shell, "-c", (
+                    shlex_join(command)
+                    if isinstance(command, (list, tuple))
+                    else command
+                )], env)
         else:
             self.process = Popen(
                 command,
@@ -1348,7 +1360,8 @@ class Result(object):
     :param str encoding:
         The string encoding used by the local shell environment.
 
-    :param str command:
+    :type command: str or tuple
+    :param command:
         The command which was executed.
 
     :param str shell:
@@ -1608,3 +1621,13 @@ def default_encoding():
         if default is not None:
             encoding = default
     return encoding
+
+def shlex_join(iterable):
+    """
+    Join elements into a shell-safe string.
+
+    .. note::
+        Backport of Python 3.8's `shlex.join
+        <https://docs.python.org/3/library/shlex.html#shlex.join>`_.
+    """
+    return " ".join(six.moves.shlex_quote(i) for i in iterable)
