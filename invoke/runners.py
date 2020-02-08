@@ -388,11 +388,13 @@ class Runner(object):
         self.encoding = self.opts["encoding"] or self.default_encoding()
         # Echo running command (wants to be early to be included in dry-run)
         if self.opts["echo"]:
-            print("\033[1;37m{}\033[0m".format(
-                shlex_join(command)
-                if isinstance(command, (list, tuple))
-                else command
-            ))
+            print(
+                "\033[1;37m{}\033[0m".format(
+                    shlex_join(command)
+                    if isinstance(command, (list, tuple))
+                    else command
+                )
+            )
         # Prepare common result args.
         # TODO: I hate this. Needs a deeper separate think about tweaking
         # Runner.generate_result in a way that isn't literally just this same
@@ -1274,11 +1276,19 @@ class Local(Runner):
                 # for now.
                 # NOTE: stdlib subprocess (actually its posix flavor, which is
                 # written in C) uses either execve or execv, depending.
-                os.execve(shell, [shell, "-c", (
-                    shlex_join(command)
-                    if isinstance(command, (list, tuple))
-                    else command
-                )], env)
+                os.execve(
+                    shell,
+                    [
+                        shell,
+                        "-c",
+                        (
+                            shlex_join(command)
+                            if isinstance(command, (list, tuple))
+                            else command
+                        ),
+                    ],
+                    env,
+                )
         else:
             self.process = Popen(
                 command,
@@ -1621,6 +1631,7 @@ def default_encoding():
         if default is not None:
             encoding = default
     return encoding
+
 
 def shlex_join(iterable):
     """
