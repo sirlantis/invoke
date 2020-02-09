@@ -1517,6 +1517,7 @@ class Local_:
         def supports_string_as_command(self, mock_Popen):
             self._run("echo hello")
             assert mock_Popen.call_args_list[0][0][0] == "echo hello"
+
         @mock_subprocess(insert_Popen=True)
         def supports_list_as_command(self, mock_Popen):
             self._run(["echo", "hello"])
