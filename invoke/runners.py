@@ -1271,24 +1271,15 @@ class Local(Runner):
                 # TODO: make subroutine?
                 winsize = struct.pack("HHHH", rows, cols, 0, 0)
                 fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, winsize)
+                # convert lists to string if necessary
+                if isinstance(command, (list, tuple)):
+                    command = shlex_join(command)
                 # Use execve for bare-minimum "exec w/ variable # args + env"
                 # behavior. No need for the 'p' (use PATH to find executable)
                 # for now.
                 # NOTE: stdlib subprocess (actually its posix flavor, which is
                 # written in C) uses either execve or execv, depending.
-                os.execve(
-                    shell,
-                    [
-                        shell,
-                        "-c",
-                        (
-                            shlex_join(command)
-                            if isinstance(command, (list, tuple))
-                            else command
-                        ),
-                    ],
-                    env,
-                )
+                os.execve(shell, [shell, "-c", command], env)
         else:
             self.process = Popen(
                 command,
